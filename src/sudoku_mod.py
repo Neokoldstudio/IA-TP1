@@ -120,9 +120,11 @@ def search(values):
         return values ## Solved!
     ## Chose the unfilled square s with the fewest possibilities
     #n,s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
+    #==============First question==============
     unfilled_squares = [s for s in squares if len(values[s])>1]
     s = random.choice(unfilled_squares)
     d = random.choice(values[s])
+    #==========================================
     return some(search(assign(values.copy(), s, d))
                 for d in values[s])
 
