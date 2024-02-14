@@ -1,3 +1,4 @@
+import random
 ## Solve Every Sudoku Puzzle
 
 ## See http://norvig.com/sudoku.html
@@ -118,7 +119,10 @@ def search(values):
     if all(len(values[s]) == 1 for s in squares):
         return values ## Solved!
     ## Chose the unfilled square s with the fewest possibilities
-    n,s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
+    #n,s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
+    unfilled_squares = [s for s in squares if len(values[s])>1]
+    s = random.choice(unfilled_squares)
+    d = random.choice(values[s])
     return some(search(assign(values.copy(), s, d))
                 for d in values[s])
 
@@ -189,11 +193,13 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 if __name__ == '__main__':
     test()
     solve_all(from_file("data/top95.txt"), "95sudoku", None)
+    solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
+    solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
     # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # solve_all(from_file("top95.txt"), "hard", None)
     # solve_all(from_file("hardest.txt"), "hardest", None)
-    # solve_all([random_puzzle() for _ in range(99)], "random", 100.0)
+    solve_all([random_puzzle() for _ in range(99)], "random", 100.0)
 
 ## References used:
 ## http://www.scanraid.com/BasicStrategies.htm

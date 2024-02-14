@@ -150,9 +150,9 @@ def solve_all(grids, name='', showif=0.0):
     When showif is a number of seconds, display puzzles that take longer.
     When showif is None, don't display any puzzles."""
     def time_solve(grid):
-        start = time.clock()
+        start = time.process_time()
         values = solve(grid)
-        t = time.clock()-start
+        t = time.process_time()-start
         ## Display puzzles that take long enough
         if showif is not None and t > showif:
             display(grid_values(grid))
@@ -189,9 +189,13 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 
 if __name__ == '__main__':
     test()
-    solve_all(from_file("easy50.txt", '========'), "easy", None)
-    solve_all(from_file("top95.txt"), "hard", None)
-    solve_all(from_file("hardest.txt"), "hardest", None)
+    solve_all(from_file("data/top95.txt"), "95sudoku", None)
+    solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
+    solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
+    # solve_all(from_file("easy50.txt", '========'), "easy", None)
+    # solve_all(from_file("easy50.txt", '========'), "easy", None)
+    # solve_all(from_file("top95.txt"), "hard", None)
+    # solve_all(from_file("hardest.txt"), "hardest", None)
     solve_all([random_puzzle() for _ in range(99)], "random", 100.0)
 
 ## References used:
