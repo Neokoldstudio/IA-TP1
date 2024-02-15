@@ -121,12 +121,12 @@ def search(values):
     ## Chose the unfilled square s with the fewest possibilities
     #n,s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
     #==============First question==============
-    unfilled_squares = [s for s in squares if len(values[s])>1]
-    s = random.choice(unfilled_squares)
-    d = random.choice(values[s])
+    # chose a square and a value at random
+    unfilled_squares = [s for s in squares if len(values[s])>1]#find all the unfilled squares (if values[s]>1 : we have multiple candidates for this square)
+    s = random.choice(unfilled_squares)#chose a random empty square
     #==========================================
     return some(search(assign(values.copy(), s, d))
-                for d in values[s])
+                for d in shuffled(values[s]))#shuffle the candidates to pick them at random
 
 ################ Utilities ################
 
@@ -194,6 +194,7 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 
 if __name__ == '__main__':
     test()
+    solve(hard1)
     solve_all(from_file("data/top95.txt"), "95sudoku", None)
     solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
     solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
