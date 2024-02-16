@@ -122,13 +122,13 @@ def getRandomNeighbor(tuple):
 # Implémentation du simulated Annealing
 # Il ne s'arrête que s'il trouve une solution (auquel cas il return True)
 # Ou si la température devient trop basse (on est coincés à un minimum local) (dans ce cas il return False)
-def simAnnealingSudoku(tuple, alpha=0.99, initial_temp=3, min_temp=0.01):
+def simAnnealingSudoku(tuple, alpha=0.99, initialTemp=3, minTemp=0.01):
     fixedNums = tuple[1]
     matrix = tuple[0]
     minScore = numberOfErrors(matrix)
-    temp = initial_temp
+    temp = initialTemp
 
-    while minScore > 0 and temp > min_temp:
+    while minScore > 0 and temp > minTemp:
         candidate = getRandomNeighbor((matrix, fixedNums))
         score = numberOfErrors(candidate)
         delta = score - minScore
@@ -142,7 +142,6 @@ def simAnnealingSudoku(tuple, alpha=0.99, initial_temp=3, min_temp=0.01):
                 matrix = candidate
                 minScore = score
         temp *= alpha
-
     if minScore == 0:
         return True
     return False
@@ -186,8 +185,8 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 
 if __name__ == '__main__':
     solve_all(from_file("data/top95.txt"), "95sudoku", None)
-    # solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
-    # solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
+    solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
+    solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
     # # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # # solve_all(from_file("top95.txt"), "hard", None)
