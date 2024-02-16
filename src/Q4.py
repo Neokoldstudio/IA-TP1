@@ -116,6 +116,7 @@ def remplirTrousGrille(grille):
             return remplirTrousRecurs(x, y + 1)
 
         for num in random.sample(range(1, 10), 9):  # Mélange aléatoire des chiffres de 1 à 9
+        # for num in range(1, 10):                      # Mélange non-aléatoire des chiffres de 1 à 9
             num_str = str(num)
             if estValide(x, y, num_str):
                 matrix[x][y] = num_str
@@ -128,32 +129,71 @@ def remplirTrousGrille(grille):
 
     return matrix
 
-def hillClimbingSudoku(grid, previousScore=83):
-    square1 = [0,1,2,9,10,11,18,19,20]
-    square2 = [3,4,5,12,13,14,12,22,23]
-    square3 = [6,7,8,15,16,17,24,25,26]
-    square4 = [27,28,29,36,37,38,45,46,47]
-    square5 = [30,31,32,39,40,41,48,49,50]
-    square6 = [33,34,35,42,43,44,51,52,53]
-    square7 = [54,55,56,63,64,65,72,73,74]
-    square8 = [57,58,59,66,67,68,75,76,77]
-    square9 = [60,61,62,69,70,71,78,79,80]
+def hillClimbingSudoku(matrix):
+    minCopie = deepcopy(matrix)
+    minScore = numberOfErrors(matrix)
+    previousScore = minScore
+    # On parcours chaque carré 3*3
+    for i in range(0,9,3):
+        for j in range(0,9,3):
+            # On parcours chaque paire dans chaque carré
+            for x1 in range(2):
+                for y1 in range(2):
+                    for x2 in range(2):
+                        for y2 in range(2):
+                                if(x1 == x2 and y1 == y2):continue
+                                copie = deepcopy(matrix)
+                                # On échange deux cases
+                                copie[i+x1][j+y1],copie[i+x2][j+y2] = copie[i+x2][j+y2],copie[i+x1][j+y1]
+                                score = numberOfErrors(copie)
+                                if score < minScore :
+                                    minCopie = copie
+                                    minScore = score
+                                # Si le score est plus petit que le score précedent, on garde le "swap" en question
+                                    
+    if minScore == previousScore :
+        print("(fail) score = " + str(minScore))
+        return minCopie
+    else:
+        print("(win) score = " + str(minScore))
+        return hillClimbingSudoku(minCopie)
 
 
+
+def isValid(matrix, posX, posY):
+    num = matrix[posX][posY]
+
+    if matrix[posX].count(num) > 1: return False
+    if [matrix[i][posY] for i in range(9)].count(num) > 1: return False
+
+    return True
+
+def numberOfErrors(matrix):
+    count = 0
+    for i in range(9):
+        for j in range(9):
+            if not isValid(matrix, i, j):
+                count += 1
+    return count
 
 ################ System test ################
 
 import time, random
+from copy import copy, deepcopy
 
 
 
 
-grid1  = '003020600900305001001806400008102900700000008006708200002609500800203009005010300'
+grid1  = '840000001070000400000000050000000504003604010000000609400902000900851000205007008'
 grid2  = '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6..................'
 
 if __name__ == '__main__':
-    print(display(matrixToGrid(remplirTrousGrille(grid1))))
+    print(display(matrixToGrid(hillClimbingSudoku(remplirTrousGrille(grid1)))))
+
+
+
+
     # solve_all(from_file("data/top95.txt"), "95sudoku", None)
     # solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
     # solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
