@@ -96,6 +96,8 @@ def eliminate(values, s, d):
                 return False
     return values
 
+################ New Heuristics ################
+
 def find_naked_pairs(values, units):
     naked_pairs = []
 
@@ -107,6 +109,18 @@ def find_naked_pairs(values, units):
                 if pairs:
                     naked_pairs.extend(pairs)
     return naked_pairs
+
+def pair_pruning(naked_pairs, values):
+    if len(naked_pairs) > 0:
+                for pair in naked_pairs:
+                    pair_digits = values[pair[0]]
+                    for unit in units[pair[0]]:
+                        for square in unit:
+                            if square not in pair:
+                                for digit in pair_digits:
+                                    eliminate(values, square, digit)
+    return values
+
 
 
 ################ Display as 2-D grid ################
@@ -138,14 +152,8 @@ def search(values):
         ## added heuristics: naked pairs, search for squares having the same pair of numbers as only candidates
         naked_pairs = find_naked_pairs(values, units[s])
         # If naked pairs are found, eliminate their digits from other squares in the unit
-        if len(naked_pairs) > 0:
-            for pair in naked_pairs:
-                pair_digits = values[pair[0]]
-                for unit in units[pair[0]]:
-                    for square in unit:
-                        if square not in pair:
-                            for digit in pair_digits:
-                                eliminate(values, square, digit)
+        values = pair_pruning(naked_pairs, values)
+
         return some(search(assign(values.copy(), s, d))
                     for d in values[s])
     return values
