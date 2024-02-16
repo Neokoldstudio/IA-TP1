@@ -1,31 +1,7 @@
-## Solve Every Sudoku Puzzle
+# Simulated annealing, question 5.
+# grid = "00504090070005055305..."
+# matrix = une liste de 9 listes de 9 chiffres
 
-## See http://norvig.com/sudoku.html
-
-## Throughout this program we have:
-##   r is a row,    e.g. 'A'
-##   c is a column, e.g. '3'
-##   s is a square, e.g. 'A3'
-##   d is a digit,  e.g. '9'
-##   u is a unit,   e.g. ['A1','B1','C1','D1','E1','F1','G1','H1','I1']
-##   grid is a grid,e.g. 81 non-blank chars, e.g. starting with '.18...7...
-##   values is a dict of possible values, e.g. {'A1':'12349', 'A2':'8', ...}
-
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    return [a+b for a in A for b in B]
-
-digits   = '123456789'
-rows     = 'ABCDEFGHI'
-cols     = digits
-squares  = cross(rows, cols)
-unitlist = ([cross(rows, c) for c in cols] +
-            [cross(r, cols) for r in rows] +
-            [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')])
-units = dict((s, [u for u in unitlist if s in u])
-             for s in squares)
-peers = dict((s, set(sum(units[s],[]))-set([s]))
-             for s in squares)
 
 ################ Display as 2-D grid ################
 
@@ -37,24 +13,10 @@ def display(grid):
 
 
 ################ Utilities ################
-
-def some(seq):
-    "Return some element of seq that is true."
-    for e in seq:
-        if e: return e
-    return False
-
+            
 def from_file(filename, sep='\n'):
     "Parse a file into a list of strings, separated by sep."
     return open(filename).read().strip().split(sep)
-
-def shuffled(seq):
-    "Return a randomly shuffled copy of the input sequence."
-    seq = list(seq)
-    random.shuffle(seq)
-    return seq
-
-################ Data manipulation ################
 
 def gridToMatrix(grid):
     matrix = []
@@ -94,12 +56,14 @@ def squaresToMatrix(squares):
 
 ################ Hill Climbing ################
 
+# Remplis les "trous" d'une grille (les 0 et les .)
+# En s'assurant qu'il n'y a qu'un seul exemplaire de chaque chiffre dans chaque carré
 def remplirTrousGrille(grille):
     matrix = gridToMatrix(grille.replace(".","0"))
-    fixedNums = [[False]*9 for i in range(9)]
+    fixedNums = [[False]*9 for _ in range(9)]
     for i in range(9):
         for j in range(9):
-            if matrix[i][j] != "0":
+            if matrix[i][j] != '0':
                 fixedNums[i][j] = True
     # Fonction pour vérifier si un chiffre est valide dans une case donnée
     def estValide(x, y, num):
@@ -134,48 +98,56 @@ def remplirTrousGrille(grille):
 
     return (matrix, fixedNums)
 
-def hillClimbingSudoku(tuple):
+# Prend un tuple (matrix, fixedNums)
+# Renvoie une grille ou deux chiffres non-fixés du même carré ont été échangés
+def getRandomNeighbor(tuple):
+    matrix = tuple[0]
+    fixedNums = tuple[1]
+    while True:
+        boxX = int(random.uniform(0,2))
+        boxY = int(random.uniform(0,2))
+        x1 = int(random.uniform(0,2))
+        x2 = int(random.uniform(0,2))
+        y1 = int(random.uniform(0,2))
+        y2 = int(random.uniform(0,2))
+        if(x1 == x2 and y1 == y2):continue
+        if(fixedNums[boxX+x1][boxY+y1] or fixedNums[boxX+x2][boxY+y2]):continue
+        copie = deepcopy(matrix)
+        # On échange deux cases
+        copie[boxX+x1][boxY+y1],copie[boxX+x2][boxY+y2] = copie[boxX+x2][boxY+y2],copie[boxX+x1][boxY+y1]
+        return copie
+
+
+
+# Implémentation du simulated Annealing
+# Il ne s'arrête que s'il trouve une solution (auquel cas il return True)
+# Ou si la température devient trop basse (on est coincés à un minimum local) (dans ce cas il return False)
+def simAnnealingSudoku(tuple, alpha=0.99, initial_temp=3, min_temp=0.01):
     fixedNums = tuple[1]
     matrix = tuple[0]
-    minCopie = deepcopy(matrix)
     minScore = numberOfErrors(matrix)
-    previousScore = minScore
-    # On parcours chaque carré 3*3
-    for i in range(0,9,3):
-        for j in range(0,9,3):
-            # On parcours chaque paire dans chaque carré
-            for x1 in range(2):
-                for y1 in range(2):
-                    for x2 in range(2):
-                        for y2 in range(2):
-                                if(x1 == x2 and y1 == y2):continue
-                                if(fixedNums[i+x1][j+y1] or fixedNums[i+x2][j+y2]):continue
-                                copie = deepcopy(matrix)
-                                # On échange deux cases
-                                copie[i+x1][j+y1],copie[i+x2][j+y2] = copie[i+x2][j+y2],copie[i+x1][j+y1]
-                                score = numberOfErrors(copie)
-                                if score < minScore :
-                                    minCopie = copie
-                                    minScore = score
-                                # Si le score est plus petit que le score précedent, on garde le "swap" en question
-                                    
-    if minScore == previousScore :
-        return False
-    if minScore < 1:
+    temp = initial_temp
+
+    while minScore > 0 and temp > min_temp:
+        candidate = getRandomNeighbor((matrix, fixedNums))
+        score = numberOfErrors(candidate)
+        delta = score - minScore
+        
+        if delta < 0:
+            matrix = candidate
+            minScore = score
+        else:
+            prob = math.exp(-delta / temp)
+            if random.uniform(0, 1) < prob:
+                matrix = candidate
+                minScore = score
+        temp *= alpha
+
+    if minScore == 0:
         return True
-    else:
-        return hillClimbingSudoku((minCopie, fixedNums))
+    return False
 
-
-
-def isValid(matrix, posX, posY):
-    num = matrix[posX][posY]
-
-    if matrix[posX].count(num) > 1: return False
-    if [matrix[i][posY] for i in range(9)].count(num) > 1: return False
-
-    return True
-
+# return the number of times the same number appears in the same row or column
 def numberOfErrors(matrix):
     count = 0
     copy = deepcopy(matrix)
@@ -188,14 +160,13 @@ def numberOfErrors(matrix):
 
 import time, random
 from copy import copy, deepcopy
+import math
 
 def solve_all(grids, name='', showif=0.0):
-    win = 0
-    total = 0
     start = time.process_time()
     def time_solve(grid):
         start = time.process_time()
-        values = hillClimbingSudoku(remplirTrousGrille(grid))
+        values = simAnnealingSudoku(remplirTrousGrille(grid))
         t = time.process_time()-start
         ## Display puzzles that take long enough
         return (t, values)
@@ -215,8 +186,8 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 
 if __name__ == '__main__':
     solve_all(from_file("data/top95.txt"), "95sudoku", None)
-    solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
-    solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
+    # solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
+    # solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
     # # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # # solve_all(from_file("easy50.txt", '========'), "easy", None)
     # # solve_all(from_file("top95.txt"), "hard", None)
