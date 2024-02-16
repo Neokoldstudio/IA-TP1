@@ -1,4 +1,3 @@
-import random
 ## Solve Every Sudoku Puzzle
 
 ## See http://norvig.com/sudoku.html
@@ -42,7 +41,7 @@ def test():
     assert peers['C2'] == set(['A2', 'B2', 'D2', 'E2', 'F2', 'G2', 'H2', 'I2',
                                'C1', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9',
                                'A1', 'A3', 'B1', 'B3'])
-    print ('All tests pass.')
+    print('All tests pass.')
 
 ################ Parse a Grid ################
 
@@ -97,6 +96,19 @@ def eliminate(values, s, d):
                 return False
     return values
 
+def find_naked_pairs(values, units):
+    naked_pairs = []
+
+    for unit in units:
+        for square in unit:
+            if len(values[square]) == 2:
+                pairs = [(square, s) for s in unit if s != square and values[s] == values[square]
+                         and ((square, s) not in naked_pairs and (s, square) not in naked_pairs)]
+                if pairs:
+                    naked_pairs.extend(pairs)
+    return naked_pairs
+
+
 ################ Display as 2-D grid ################
 
 def display(values):
@@ -104,9 +116,10 @@ def display(values):
     width = 1+max(len(values[s]) for s in squares)
     line = '+'.join(['-'*(width*3)]*3)
     for r in rows:
-        print (''.join(values[r+c].center(width)+('|' if c in '36' else ''))
-                      for c in cols)
+        print(''.join(values[r+c].center(width)+('|' if c in '36' else '')
+                      for c in cols))
         if r in 'CF': print(line)
+    print
 
 ################ Search ################
 
@@ -119,14 +132,22 @@ def search(values):
     if all(len(values[s]) == 1 for s in squares):
         return values ## Solved!
     ## Chose the unfilled square s with the fewest possibilities
-    #n,s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
-    #==============First question==============
-    # chose a square and a value at random
-    unfilled_squares = [s for s in squares if len(values[s])>1]#find all the unfilled squares (if values[s]>1 : we have multiple candidates for this square)
-    s = random.choice(unfilled_squares)#chose a random empty square
-    return some(search(assign(values.copy(), s, d))
-                for d in shuffled(values[s]))#shuffle the candidates to pick them at random
-    #==========================================
+    if any(len(values[s]) > 1 for s in squares):
+        n, s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
+        ## added heuristics: naked pairs, search for squares having the same pair of numbers as only candidates
+        naked_pairs = find_naked_pairs(values, units[s])
+        # If naked pairs are found, eliminate their digits from other squares in the unit
+        if len(naked_pairs) > 0:
+            for pair in naked_pairs:
+                pair_digits = values[pair[0]]
+                for unit in units[pair[0]]:
+                    for square in unit:
+                        if square not in pair:
+                            for digit in pair_digits:
+                                eliminate(values, square, digit)
+        return some(search(assign(values.copy(), s, d))
+                    for d in values[s])
+    return values
 
 ################ Utilities ################
 
@@ -194,7 +215,6 @@ hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6.......
 
 if __name__ == '__main__':
     test()
-    solve(hard1)
     solve_all(from_file("data/top95.txt"), "95sudoku", None)
     solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
     solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
