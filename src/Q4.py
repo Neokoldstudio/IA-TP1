@@ -1,3 +1,4 @@
+from statistics import mean
 ## Solve Every Sudoku Puzzle
 
 ## See http://norvig.com/sudoku.html
@@ -207,6 +208,8 @@ def solve_all(grids, name='', showif=0.0):
             sumTimes += 0.01
         print ("Solved %d of %d %s puzzles (avg %.2f secs (%d Hz), max %.2f secs)." % (
             sum(results), N, name, sumTimes/N, N/sumTimes, max(times)))
+    return(sum(results)/N)
+
 
 
 grid1  = '840000001070000400000000050000000504003604010000000609400902000900851000205007008'
@@ -214,11 +217,14 @@ grid2  = '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2...
 hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6..................'
 
 if __name__ == '__main__':
-    solve_all(from_file("data/top95.txt"), "95sudoku", None)
-    solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
-    solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
-    # # solve_all(from_file("easy50.txt", '========'), "easy", None)
-    # # solve_all(from_file("easy50.txt", '========'), "easy", None)
-    # # solve_all(from_file("top95.txt"), "hard", None)
-    # # solve_all(from_file("hardest.txt"), "hardest", None)
+    ratio95 = solve_all(from_file("data/top95.txt"), "95sudoku", None)
+    ratio100 = solve_all(from_file("data/100sudoku.txt"), "100sudoku", None)
+    ratio1000 = solve_all(from_file("data/1000sudoku.txt"), "1000sudoku", None)
+
+    precision_percentage = mean([ratio95, ratio100, ratio1000]) * 100
+    print("The precision percentage of this method is: {:.2f}%".format(precision_percentage))
+    # solve_all(from_file("easy50.txt", '========'), "easy", None)
+    # solve_all(from_file("easy50.txt", '========'), "easy", None)
+    # solve_all(from_file("top95.txt"), "hard", None)
+    # solve_all(from_file("hardest.txt"), "hardest", None)
     # solve_all([random_puzzle() for _ in range(99)], "random", 100.0)
