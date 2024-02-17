@@ -132,7 +132,7 @@ def simAnnealingSudoku(tuple, alpha=0.99, initial_temp=3, min_temp=0.01):
         candidate = getRandomNeighbor((matrix, fixedNums))
         score = numberOfErrors(candidate)
         delta = score - minScore
-        
+
         if delta < 0:
             matrix = candidate
             minScore = score

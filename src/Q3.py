@@ -98,27 +98,26 @@ def eliminate(values, s, d):
 
 ################ New Heuristics ################
 
-def find_naked_pairs(values, units):
+def find_naked_pairs(values, unit):
     naked_pairs = []
 
-    for unit in units:
-        for square in unit:
-            if len(values[square]) == 2:
-                pairs = [(square, s) for s in unit if s != square and values[s] == values[square]
-                         and ((square, s) not in naked_pairs and (s, square) not in naked_pairs)]
-                if pairs:
-                    naked_pairs.extend(pairs)
+    for square in unit:
+        if len(values[square]) == 2:
+            pairs = [(square, s) for s in unit if s != square and values[s] == values[square]
+                        and ((square, s) not in naked_pairs and (s, square) not in naked_pairs)]
+            if pairs:
+                naked_pairs.extend(pairs)
     return naked_pairs
 
 def pair_pruning(naked_pairs, values):
     if len(naked_pairs) > 0:
-                for pair in naked_pairs:
-                    pair_digits = values[pair[0]]
-                    for unit in units[pair[0]]:
-                        for square in unit:
-                            if square not in pair:
-                                for digit in pair_digits:
-                                    eliminate(values, square, digit)
+        for pair in naked_pairs:
+            pair_digits = values[pair[0]]
+            for unit in units[pair[0]] and units[pair[1]]:
+                for square in unit:
+                    if square not in pair:
+                        for digit in pair_digits:
+                            eliminate(values, square, digit)
     return values
 
 
@@ -145,18 +144,19 @@ def search(values):
         return False ## Failed earlier
     if all(len(values[s]) == 1 for s in squares):
         return values ## Solved!
-    #if there are still unfilled squares, continue with the search
-    if any(len(values[s]) > 1 for s in squares):
-        ## Chose the unfilled square s with the fewest possibilities
-        n, s = min((len(values[s]), s) for s in squares if len(values[s]) > 1)
-        ## added heuristics: naked pairs, search for squares having the same pair of numbers as only candidates
-        naked_pairs = find_naked_pairs(values, units[s])
+    ## added heuristics: naked pairs, search for squares having the same pair of numbers as only candidates
+    for unit in unitlist:
+        naked_pairs = find_naked_pairs(values.copy(), unit)
         # If naked pairs are found, eliminate their digits from other squares in the unit
-        values = pair_pruning(naked_pairs, values)
+        values = pair_pruning(naked_pairs, values.copy())
 
-        return some(search(assign(values.copy(), s, d))
-                    for d in values[s])
-    return values
+    ## Chose the unfilled square s with the fewest possibilities
+    unsolved_squares = [(len(values[s]), s) for s in squares if len(values[s]) > 1]
+    if not unsolved_squares:
+        return False
+    n, s = min(unsolved_squares)
+
+    return some(search(assign(values.copy(), s, d)) for d in values[s])
 
 ################ Utilities ################
 
